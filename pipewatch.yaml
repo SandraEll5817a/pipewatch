@@ -1,0 +1,22 @@
+# pipewatch configuration file
+# Define your ETL pipelines and alert thresholds here.
+
+default_webhook_url: "https://hooks.slack.com/services/YOUR/DEFAULT/WEBHOOK"
+
+pipelines:
+  - name: ingest_orders
+    webhook_url: "https://hooks.slack.com/services/YOUR/ORDERS/WEBHOOK"
+    thresholds:
+      max_duration_seconds: 300    # alert if pipeline takes longer than 5 minutes
+      max_error_rate: 0.05         # alert if more than 5% of records fail
+      min_rows_processed: 100      # alert if fewer than 100 rows are processed
+
+  - name: sync_users
+    thresholds:
+      max_duration_seconds: 60
+      min_rows_processed: 10
+
+  - name: aggregate_metrics
+    thresholds:
+      max_duration_seconds: 600
+      max_error_rate: 0.01
