@@ -25,6 +25,13 @@ class AppConfig:
     pipelines: list[PipelineConfig] = field(default_factory=list)
     default_webhook_url: Optional[str] = None
 
+    def get_pipeline(self, name: str) -> Optional[PipelineConfig]:
+        """Return the PipelineConfig with the given name, or None if not found."""
+        for pipeline in self.pipelines:
+            if pipeline.name == name:
+                return pipeline
+        return None
+
 
 def load_config(path: str = "pipewatch.yaml") -> AppConfig:
     """Load and parse configuration from a YAML file."""
