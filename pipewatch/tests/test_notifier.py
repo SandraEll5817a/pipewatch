@@ -74,6 +74,15 @@ def test_send_webhook_returns_false_on_http_error():
     assert result is False
 
 
+def test_send_webhook_returns_false_on_url_error():
+    import urllib.error
+    with patch("urllib.request.urlopen", side_effect=urllib.error.URLError(
+        "Connection refused"
+    )):
+        result = send_webhook(make_payload())
+    assert result is False
+
+
 def test_send_webhook_skips_empty_violations():
     payload = make_payload(violations=[])
     with patch("urllib.request.urlopen") as mock_open:
@@ -94,5 +103,5 @@ def test_notify_violations_returns_false_without_url():
 def test_notify_violations_calls_send_webhook():
     with patch("pipewatch.notifier.send_webhook", return_value=True) as mock_send:
         result = notify_violations("orders", [VIOLATION], webhook_url=WEBHOOK_URL)
-    mock_send.assert_called_once()
     assert result is True
+    mock_send.assert_called_once()
