@@ -21,8 +21,17 @@ def watchdog_command() -> None:
 @click.option("--history", "history_path", default=".pipewatch_history.json", show_default=True)
 def check_watchdogs(config_path: str, history_path: str) -> None:
     """Check all pipelines for overdue runs based on watchdog config."""
-    app_config = load_config(config_path)
-    runs = load_history(history_path)
+    try:
+        app_config = load_config(config_path)
+    except FileNotFoundError:
+        click.echo(f"Error: config file '{config_path}' not found.", err=True)
+        sys.exit(2)
+
+    try:
+        runs = load_history(history_path)
+    except FileNotFoundError:
+        click.echo(f"Error: history file '{history_path}' not found.", err=True)
+        sys.exit(2)
 
     watchdog_configs = [
         {"name": p.name, "interval_minutes": p.watchdog_interval_minutes}
