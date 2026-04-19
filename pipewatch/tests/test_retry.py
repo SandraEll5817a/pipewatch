@@ -96,11 +96,10 @@ def test_sleep_called_between_attempts():
 
 
 def test_only_specified_exceptions_retried():
-    """A non-matching exception should propagate immediately."""
-
-    def boom():
-        raise RuntimeError("unexpected")
-
-    policy = RetryPolicy(max_attempts=3, exceptions=(ValueError,))
-    with pytest.raises(RuntimeError):
-        with_retry(boom, policy, _sleep_fn=_no_sleep)
+    """A non-matching exception should propagate immediately without retrying."""
+    sleep_mock = MagicMock()
+    fn = _make_flaky(fail_times=10)
+    policy = RetryPolicy(max_attempts=5, backoff_seconds=0.1, retryable_exceptions=(TypeError,))
+    with pytest.raises(ValueError):
+        with_retry(fn, policy, _sleep_fn=sleep_mock)
+    sleep_mock.assert_not_called()
