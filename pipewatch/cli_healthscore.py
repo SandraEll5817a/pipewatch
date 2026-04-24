@@ -1,42 +1,38 @@
-"""CLI command for displaying pipeline health scores."""
 import click
 from pipewatch.config import load_config
 from pipewatch.history import load_history
 from pipewatch.healthscore import compute_health_score
 
 
-@click.group(name="health-score")
-def healthscore_command() -> None:
-    """Show health scores for monitored pipelines."""
+@click.group(name="healthscore")
+def healthscore_command():
+    """View pipeline health scores."""
 
 
 @healthscore_command.command(name="show")
 @click.option("--config", "config_path", default="pipewatch.yaml", show_default=True)
-@click.option("--history", "history_path", default=".pipewatch_history.json", show_default=True)
-@click.option("--min-grade", default=None, help="Only show pipelines at or below this grade (e.g. B).")
-def show_scores(config_path: str, history_path: str, min_grade: str | None) -> None:
-    """Print health scores for all configured pipelines."""
-    grade_order = ["A", "B", "C", "D", "F"]
+@click.option("--pipeline", default=None, help="Filter to a single pipeline")
+@click.option("--min-runs", default=5, show_default=True, help="Minimum runs required")
+def show_scores(config_path: str, pipeline: str | None, min_runs: int) -> None:
+    """Display health scores for all (or one) pipeline."""
     app = load_config(config_path)
-    any_printed = False
+    pipelines = app.pipelines
+    if pipeline:
+        pipelines = [p for p in pipelines if p.name == pipeline]
+        if not pipelines:
+            click.echo(f"Pipeline '{pipeline}' not found.", err=True)
+            raise SystemExit(1)
 
-    for pipeline in app.pipelines:
-        runs = [
-            r for r in load_history(history_path)
-            if r.pipeline == pipeline.name
-        ]
-        score = compute_health_score(pipeline.name, runs)
+    any_low = False
+    for p in pipelines:
+        history = load_history(p.name)
+        score = compute_health_score(history, min_runs=min_runs)
+        flag = "" if score.score >= 80 else " [!]"
+        if score.score < 80:
+            any_low = True
+        click.echo(
+            f"{p.name}: {score} (runs={score.run_count}, "
+            f"grade={score.grade}){flag}"
+        )
 
-        if min_grade:
-            min_grade_upper = min_grade.upper()
-            if min_grade_upper not in grade_order:
-                raise click.BadParameter(f"Invalid grade '{min_grade}'. Choose from A B C D F.")
-            threshold_idx = grade_order.index(min_grade_upper)
-            if grade_order.index(score.grade) < threshold_idx:
-                continue
-
-        click.echo(str(score))
-        any_printed = True
-
-    if not any_printed:
-        click.echo("No pipelines matched the filter.")
+    raise SystemExit(1 if any_low else 0)
