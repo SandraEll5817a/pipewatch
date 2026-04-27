@@ -63,3 +63,15 @@ def test_check_exits_zero_when_no_watchdog_config(runner):
         result = runner.invoke(watchdog_command, ["check"])
     assert result.exit_code == 0
     assert "No pipelines" in result.output
+
+
+def test_check_reports_pipeline_name_when_stale(runner):
+    """Verify that the name of the stale pipeline appears in the output."""
+    app_config = _make_app_config([_make_pipeline("nightly_export", 120)])
+    stale_result = WatchdogResult("nightly_export", 120, None, True, None)
+    with patch("pipewatch.cli_watchdog.load_config", return_value=app_config), \
+         patch("pipewatch.cli_watchdog.load_history", return_value=[]), \
+         patch("pipewatch.cli_watchdog.check_all_watchdogs", return_value=[stale_result]):
+        result = runner.invoke(watchdog_command, ["check"])
+    assert result.exit_code == 1
+    assert "nightly_export" in result.output
