@@ -20,6 +20,9 @@ def snapshot_command() -> None:
 def list_snapshots(snap_file: str, pipeline_filter: str | None, limit: int) -> None:
     """List recent metric snapshots."""
     path = Path(snap_file)
+    if not path.exists():
+        click.echo("No snapshot file found.")
+        return
     snapshots = load_snapshots(path)
     if pipeline_filter:
         snapshots = [s for s in snapshots if s.pipeline == pipeline_filter]
