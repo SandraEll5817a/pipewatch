@@ -24,7 +24,13 @@ def escalation_command():
 @click.option("--cooldown", default=60, show_default=True, help="Minutes between escalations.")
 def check_escalation(config_path: str, secondary_webhook: str, threshold: int, cooldown: int):
     """Check which pipelines should be escalated based on recent history."""
-    app = load_config(config_path)
+    try:
+        app = load_config(config_path)
+    except FileNotFoundError:
+        raise click.ClickException(f"Config file not found: {config_path}")
+    except Exception as exc:  # noqa: BLE001
+        raise click.ClickException(f"Failed to load config: {exc}") from exc
+
     policy = EscalationPolicy(
         secondary_webhook=secondary_webhook,
         failure_threshold=threshold,
