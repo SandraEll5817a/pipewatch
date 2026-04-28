@@ -50,6 +50,13 @@ def test_ignores_other_pipelines():
     assert result.stale is True
 
 
+def test_exactly_at_interval_boundary():
+    """A run exactly at the interval boundary should not be considered stale."""
+    result = check_watchdog("etl", 60, [_run("etl", 60)], now=NOW)
+    assert result.stale is False
+    assert result.minutes_overdue is None
+
+
 def test_str_ok():
     result = WatchdogResult("etl", 60, NOW, False, None)
     assert "OK" in str(result)
