@@ -48,3 +48,15 @@ def load_json_summary(input_path: str) -> Optional[dict]:
             return json.load(fh)
     except (json.JSONDecodeError, OSError):
         return None
+
+
+def export_auto(results: List[PipelineResult], output_path: str) -> Path:
+    """Write a summary of *results* to *output_path*, choosing the format
+    automatically based on the file extension.
+
+    Files ending in ``.json`` are written as JSON; all other extensions are
+    written as plain text.  Returns the resolved Path that was written.
+    """
+    if Path(output_path).suffix.lower() == ".json":
+        return export_json(results, output_path)
+    return export_text(results, output_path)
